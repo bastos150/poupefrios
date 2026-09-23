@@ -158,6 +158,12 @@ export function ConfigPage() {
     await load();
   }
 
+  async function deleteEquip(eq: Equipamento) {
+    if (!confirm(`Excluir o equipamento "${eq.nome}"? Esta ação não pode ser desfeita.`)) return;
+    await supabase.from('equipamentos').delete().eq('id', eq.id);
+    await load();
+  }
+
   if (loading) return <Loading message="Carregando configurações..." />;
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
@@ -300,9 +306,14 @@ export function ConfigPage() {
                         <Badge variant={eq.ativo ? 'success' : 'neutral'}>{eq.ativo ? 'Ativo' : 'Inativo'}</Badge>
                       </td>
                       <td className="sp-table-td">
-                        <Button variant="ghost" size="sm" onClick={() => toggleEquipAtivo(eq)}>
-                          {eq.ativo ? <X size={14} /> : <Check size={14} />}
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => toggleEquipAtivo(eq)}>
+                            {eq.ativo ? <X size={14} /> : <Check size={14} />}
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => deleteEquip(eq)}>
+                            <Trash2 size={14} className="text-red-600" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
