@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Select, Input } from '@/components/ui/Form';
 import { Loading, EmptyState } from '@/components/ui/Feedback';
-import { formatDateTime, formatDate, formatTime, downloadCSV, printContent } from '@/lib/utils';
+import { formatDateTime, formatDate, formatTime, downloadCSV, printContent, nowLocalISO } from '@/lib/utils';
 import type { RegistroTemperatura, Equipamento, Setor, Ocorrencia } from '@/lib/types';
 
 type TipoControle = 'temperatura' | 'recebimento' | 'higienizacao' | 'ocorrencias';
@@ -31,9 +31,9 @@ export function HistoricoPage() {
   const [filtroInicio, setFiltroInicio] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
-    return d.toISOString().split('T')[0];
+    return d.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
   });
-  const [filtroFim, setFiltroFim] = useState(new Date().toISOString().split('T')[0]);
+  const [filtroFim, setFiltroFim] = useState(nowLocalISO().split('T')[0]);
 
   const [registros, setRegistros] = useState<(RegistroTemperatura & { equipamento?: Equipamento; setor?: Setor })[]>([]);
   const [recebimentos, setRecebimentos] = useState<any[]>([]);

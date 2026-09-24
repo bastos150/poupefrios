@@ -202,3 +202,44 @@ export interface Configuracao {
   valor: string;
   descricao: string | null;
 }
+
+export type ControleCategoria =
+  | 'saude_funcionarios'
+  | 'higiene_pessoal'
+  | 'treinamento'
+  | 'fornecedores'
+  | 'recebimento'
+  | 'temperatura_conservacao'
+  | 'identificacao_rastreabilidade'
+  | 'descongelamento'
+  | 'preparo'
+  | 'alergenicos'
+  | 'exposicao'
+  | 'rotulagem'
+  | 'produtos_granel'
+  | 'doacoes'
+  | 'suspeita_surto'
+  | 'transporte'
+  | 'higienizacao_manutencao'
+  | 'agua_residuos_pragas'
+  | 'documentos_registros'
+  | 'recolhimento';
+
+export interface ControleOperacional {
+  id: string;
+  categoria: ControleCategoria;
+  titulo: string;
+  descricao: string | null;
+  status: 'registrado' | 'pendente' | 'conforme' | 'nao_conforme' | 'em_tratamento' | 'concluido' | 'cancelado';
+  data_evento: string;
+  responsavel: string | null;
+  lote: string | null;
+  validade: string | null;
+  temperatura: number | null;
+  origem: string | null;
+  destino: string | null;
+  observacao: string | null;
+  setor_id: string | null;
+  user_id: string;
+  created_at: string;
+}

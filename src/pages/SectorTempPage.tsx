@@ -20,7 +20,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Select, Textarea } from '@/components/ui/Form';
 import { Loading, EmptyState } from '@/components/ui/Feedback';
 import { PhotoCapture } from '@/components/PhotoCapture';
-import { formatDateTime, formatTime, downloadCSV, printContent } from '@/lib/utils';
+import { formatDateTime, formatTime, downloadCSV, printContent, nowLocalISO } from '@/lib/utils';
 import type { Equipamento, RegistroTemperatura, Ocorrencia, AcaoCorretiva, Setor } from '@/lib/types';
 
 interface SectorTempPageProps {
@@ -58,7 +58,7 @@ export function SectorTempPage({ setorNome, setorId }: SectorTempPageProps) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const today = new Date().toISOString().split('T')[0];
+    const today = nowLocalISO().split('T')[0];
     const startOfDay = `${today}T00:00:00`;
     const endOfDay = `${today}T23:59:59`;
 

@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Form';
 import { Loading, EmptyState } from '@/components/ui/Feedback';
-import { formatDateTime, formatTime } from '@/lib/utils';
+import { formatDateTime, formatTime, nowLocalISO } from '@/lib/utils';
 import type { RegistroTemperatura, Ocorrencia, Alerta, ChecklistExecucao, Equipamento, Setor } from '@/lib/types';
 
 interface DashboardData {
@@ -36,7 +36,7 @@ export function DashboardPage() {
   const [setores, setSetores] = useState<Setor[]>([]);
   const [equipamentos, setEquipamentos] = useState<Equipamento[]>([]);
   const [filtroSetor, setFiltroSetor] = useState<string>('all');
-  const [filtroData, setFiltroData] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [filtroData, setFiltroData] = useState<string>(nowLocalISO().split('T')[0]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -119,6 +119,11 @@ export function DashboardPage() {
     load();
   }, [load]);
 
+  async function markAlertRead(alertId: string) {
+    await supabase.from('alertas').update({ lido: true }).eq('id', alertId);
+    await load();
+  }
+
   if (loading) return <Loading message="Carregando painel..." />;
 
   const stats = [
@@ -169,7 +174,7 @@ export function DashboardPage() {
               {[0, 1, 2, 3, 4].map((offset) => {
                 const d = new Date();
                 d.setDate(d.getDate() - offset);
-                const iso = d.toISOString().split('T')[0];
+                const iso = d.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
                 return (
                   <option key={iso} value={iso}>
                     {d.toLocaleDateString('pt-BR')}
@@ -237,6 +242,12 @@ export function DashboardPage() {
                   <p className="text-sm font-medium text-slate-800">{alerta.mensagem}</p>
                   <p className="text-xs text-slate-400">{formatDateTime(alerta.created_at)}</p>
                 </div>
+                <button
+                  onClick={() => markAlertRead(alerta.id)}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-blue-600 transition hover:bg-blue-50"
+                >
+                  Marcar como lida
+                </button>
                 <Badge
                   variant={
                     alerta.severidade === 'critica'

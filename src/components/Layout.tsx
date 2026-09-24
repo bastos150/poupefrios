@@ -12,6 +12,7 @@ import {
   X,
   AlertTriangle,
   ShieldCheck,
+  ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { Badge } from '@/components/ui/Badge';
@@ -22,6 +23,7 @@ export type PageKey =
   | 'acougue'
   | 'padaria'
   | 'checklists'
+  | 'operacional'
   | 'historico'
   | 'config';
 
@@ -38,6 +40,7 @@ const navItems: NavItem[] = [
   { key: 'acougue', label: 'Açougue', icon: <Beef size={20} /> },
   { key: 'padaria', label: 'Padaria', icon: <Croissant size={20} /> },
   { key: 'checklists', label: 'Checklists & POPs', icon: <ClipboardCheck size={20} /> },
+  { key: 'operacional', label: 'Controles Operacionais', icon: <ClipboardList size={20} /> },
   { key: 'historico', label: 'Histórico & Relatórios', icon: <History size={20} /> },
   { key: 'config', label: 'Configurações', icon: <Settings size={20} />, adminOnly: true },
 ];

@@ -18,7 +18,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Select, Textarea } from '@/components/ui/Form';
 import { Loading, EmptyState } from '@/components/ui/Feedback';
 import { PhotoCapture } from '@/components/PhotoCapture';
-import { formatDateTime, formatTime, formatDate, downloadCSV, printContent } from '@/lib/utils';
+import { formatDateTime, formatTime, formatDate, downloadCSV, printContent, nowLocalISO } from '@/lib/utils';
 import type { Recebimento, Higienizacao, Fornecedor, Ocorrencia, AcaoCorretiva } from '@/lib/types';
 
 interface AcouguePageProps {
@@ -81,7 +81,7 @@ export function AcouguePage({ setorId }: AcouguePageProps) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const today = new Date().toISOString().split('T')[0];
+    const today = nowLocalISO().split('T')[0];
     const startOfDay = `${today}T00:00:00`;
     const endOfDay = `${today}T23:59:59`;
 
@@ -155,6 +155,7 @@ export function AcouguePage({ setorId }: AcouguePageProps) {
       condicao_embalagem: recebForm.condicao_embalagem,
       decisao: recebForm.decisao,
       observacao: recebForm.observacao || null,
+      foto_url: recebForm.foto_url || null,
       user_id: user?.id,
     });
     setRecebSubmitting(false);

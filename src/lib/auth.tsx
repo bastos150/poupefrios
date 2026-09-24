@@ -71,12 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) return { error: error.message };
     if (data.user) {
-      await supabase.from('perfis').upsert({
-        id: data.user.id,
-        nome,
-        papel: 'funcionario',
-        ativo: true,
-      });
+      await loadPerfil(data.user.id);
     }
     return { error: null };
   }

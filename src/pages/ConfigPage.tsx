@@ -88,7 +88,7 @@ export function ConfigPage() {
   async function saveConfigs() {
     setConfigSaving(true);
     const updates = Object.entries(configForm).map(([chave, valor]) =>
-      supabase.from('configuracoes').update({ valor, updated_at: new Date().toISOString() }).eq('chave', chave)
+      supabase.from('configuracoes').upsert({ chave, valor, updated_at: new Date().toISOString() }, { onConflict: 'chave' })
     );
     await Promise.all(updates);
     setConfigSaving(false);
@@ -139,13 +139,19 @@ export function ConfigPage() {
     e.preventDefault();
     if (!userForm.perfil_id || !userForm.nome.trim()) return;
     setUserSubmitting(true);
-    await supabase.from('perfis').update({
-      nome: userForm.nome.trim(),
-      cargo_id: userForm.cargo_id || null,
-      setor_id: userForm.setor_id || null,
-      papel: userForm.papel,
-      ativo: userForm.ativo,
-    }).eq('id', userForm.perfil_id);
+    const { error: rpcError } = await supabase.rpc('admin_update_perfil', {
+      target_id: userForm.perfil_id,
+      target_nome: userForm.nome.trim(),
+      target_cargo_id: userForm.cargo_id || null,
+      target_setor_id: userForm.setor_id || null,
+      target_papel: userForm.papel,
+      target_ativo: userForm.ativo,
+    });
+    if (rpcError) {
+      alert('Erro ao salvar usuário: ' + rpcError.message);
+      setUserSubmitting(false);
+      return;
+    }
     setUserSubmitting(false);
     setShowUserModal(false);
     setUserForm({ perfil_id: '', nome: '', cargo_id: '', setor_id: '', papel: 'funcionario', ativo: true });

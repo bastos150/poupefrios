@@ -9,6 +9,7 @@ import { AcouguePage } from '@/pages/AcouguePage';
 import { ChecklistsPage } from '@/pages/ChecklistsPage';
 import { HistoricoPage } from '@/pages/HistoricoPage';
 import { ConfigPage } from '@/pages/ConfigPage';
+import { OperacionalPage } from '@/pages/OperacionalPage';
 import { Loading } from '@/components/ui/Feedback';
 import type { Setor } from '@/lib/types';
 
@@ -47,9 +48,11 @@ function AppContent() {
   const padariaSetor = setores.find((s) => s.nome === 'Padaria');
 
   // Guard admin-only pages
-  if (page === 'config' && perfil?.papel !== 'admin') {
-    setPage('dashboard');
-  }
+  useEffect(() => {
+    if (page === 'config' && perfil?.papel !== 'admin') {
+      setPage('dashboard');
+    }
+  }, [page, perfil]);
 
   function renderPage() {
     switch (page) {
@@ -71,6 +74,8 @@ function AppContent() {
         );
       case 'checklists':
         return <ChecklistsPage />;
+      case 'operacional':
+        return <OperacionalPage />;
       case 'historico':
         return <HistoricoPage />;
       case 'config':
