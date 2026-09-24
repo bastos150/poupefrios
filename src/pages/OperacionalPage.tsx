@@ -186,7 +186,7 @@ export function OperacionalPage() {
   async function deleteRecord(record: ControleOperacional) {
     if (!confirm(`Excluir o registro "${record.titulo}"?`)) return;
     if (record.anexo_url) {
-      await supabase.storage.from('fotos').remove([record.anexo_url]);
+      await supabase.storage.from('evidencias').remove([record.anexo_url]);
     }
     const { error: deleteError } = await supabase.from('controles_operacionais').delete().eq('id', record.id);
     if (deleteError) setError('Não foi possível excluir este registro.');
@@ -203,7 +203,7 @@ export function OperacionalPage() {
     setUploadingId(record.id);
     setError(null);
     const filePath = `controles/${record.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage.from('fotos').upload(filePath, file, { contentType: 'application/pdf' });
+    const { error: uploadError } = await supabase.storage.from('evidencias').upload(filePath, file, { contentType: 'application/pdf' });
     if (uploadError) {
       setError('Não foi possível enviar o arquivo.');
       setUploadingId(null);
@@ -222,7 +222,7 @@ export function OperacionalPage() {
   async function removeAnexo(record: ControleOperacional) {
     if (!record.anexo_url) return;
     if (!confirm('Remover o arquivo anexado?')) return;
-    await supabase.storage.from('fotos').remove([record.anexo_url]);
+    await supabase.storage.from('evidencias').remove([record.anexo_url]);
     const { error: updateError } = await supabase.from('controles_operacionais').update({ anexo_url: null }).eq('id', record.id);
     if (updateError) {
       setError('Não foi possível remover o anexo.');
@@ -233,7 +233,7 @@ export function OperacionalPage() {
 
   function getAnexoUrl(record: ControleOperacional): string | null {
     if (!record.anexo_url) return null;
-    const { data } = supabase.storage.from('fotos').getPublicUrl(record.anexo_url);
+    const { data } = supabase.storage.from('evidencias').getPublicUrl(record.anexo_url);
     return data.publicUrl;
   }
 
