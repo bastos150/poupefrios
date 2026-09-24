@@ -106,6 +106,7 @@ export function OperacionalPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewingRecord, setViewingRecord] = useState<ControleOperacional | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const active = tabs.find((tab) => tab.key === activeTab) ?? tabs[0];
@@ -141,12 +142,14 @@ export function OperacionalPage() {
   function openCreate() {
     setForm({ ...emptyForm, data_evento: nowLocalISO().split('T')[0] });
     setEditingId(null);
+    setPendingFile(null);
     setShowForm(true);
   }
 
   function openEdit(record: ControleOperacional) {
     setForm(recordToForm(record));
     setEditingId(record.id);
+    setPendingFile(null);
     setShowForm(true);
   }
 
@@ -171,15 +174,40 @@ export function OperacionalPage() {
       setor_id: form.setor_id || null,
     };
 
+    let savedId = editingId;
     if (editingId) {
       const { error: updateError } = await supabase.from('controles_operacionais').update(payload).eq('id', editingId);
-      if (updateError) setError('Não foi possível atualizar este registro.');
-      else { setShowForm(false); setEditingId(null); await load(); }
+      if (updateError) {
+        setError('Não foi possível atualizar este registro.');
+        setSaving(false);
+        return;
+      }
     } else {
-      const { error: insertError } = await supabase.from('controles_operacionais').insert({ ...payload, user_id: perfil?.id });
-      if (insertError) setError('Não foi possível salvar este registro. Confira os dados e tente novamente.');
-      else { setForm({ ...emptyForm, data_evento: nowLocalISO().split('T')[0] }); setShowForm(false); await load(); }
+      const { data: inserted, error: insertError } = await supabase.from('controles_operacionais').insert({ ...payload, user_id: perfil?.id }).select('id').maybeSingle();
+      if (insertError || !inserted) {
+        setError('Não foi possível salvar este registro. Confira os dados e tente novamente.');
+        setSaving(false);
+        return;
+      }
+      savedId = inserted.id as string;
     }
+
+    if (pendingFile && savedId) {
+      const filePath = `controles/${savedId}/${Date.now()}-${pendingFile.name}`;
+      const { error: uploadError } = await supabase.storage.from('evidencias').upload(filePath, pendingFile, { contentType: 'application/pdf' });
+      if (uploadError) {
+        setError('Registro salvo, mas não foi possível enviar o PDF. Você poderá anexá-lo depois.');
+      } else {
+        const { error: attachError } = await supabase.from('controles_operacionais').update({ anexo_url: filePath }).eq('id', savedId);
+        if (attachError) setError('Registro salvo, mas não foi possível vincular o PDF.');
+      }
+    }
+
+    setForm({ ...emptyForm, data_evento: nowLocalISO().split('T')[0] });
+    setPendingFile(null);
+    setShowForm(false);
+    setEditingId(null);
+    await load();
     setSaving(false);
   }
 
@@ -349,6 +377,20 @@ export function OperacionalPage() {
                 <Input label="Destino" value={form.destino} onChange={(event) => updateForm('destino', event.target.value)} placeholder="Setor, cliente ou instituição" />
                 <Textarea label="Descrição" value={form.descricao} onChange={(event) => updateForm('descricao', event.target.value)} className="md:col-span-2" placeholder="Descreva o controle, evidência ou providência." />
                 <Textarea label="Observações" value={form.observacao} onChange={(event) => updateForm('observacao', event.target.value)} className="md:col-span-2" />
+                <div className="rounded-xl border border-dashed border-blue-200 bg-blue-50/60 p-4 md:col-span-2">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Anexar PDF de evidência</p>
+                      <p className="mt-1 text-xs text-slate-500">Opcional: laudo, certificado, comprovante ou documento do controle.</p>
+                    </div>
+                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50">
+                      <Paperclip size={16} />
+                      {pendingFile ? 'Trocar PDF' : 'Selecionar PDF'}
+                      <input type="file" accept="application/pdf" className="hidden" onChange={(event) => setPendingFile(event.target.files?.[0] ?? null)} />
+                    </label>
+                  </div>
+                  {pendingFile && <p className="mt-3 truncate text-xs font-medium text-blue-700">Arquivo selecionado: {pendingFile.name}</p>}
+                </div>
                 <div className="flex justify-end gap-2 md:col-span-2">
                   <Button type="button" variant="ghost" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancelar</Button>
                   <Button type="submit" loading={saving}>{editingId ? 'Atualizar registro' : 'Salvar registro'}</Button>
@@ -363,7 +405,7 @@ export function OperacionalPage() {
               <span className="flex items-center gap-2 text-sm text-slate-500"><Filter size={15} /> {filteredRecords.length} registro(s)</span>
             </div>
             {error && <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
-            {loading ? <Loading message="Carregando registros..." /> : filteredRecords.length === 0 ? <EmptyState icon={<ClipboardList size={38} />} title="Nenhum registro neste módulo" description="Use o botao Novo registro para começar o acompanhamento." /> : (
+            {loading ? <Loading message="Carregando registros..." /> : filteredRecords.length === 0 ? <EmptyState icon={<ClipboardList size={38} />} title="Nenhum registro neste módulo" description="Cadastre o primeiro controle. Depois de salvar, os botões Editar, PDF e Imprimir aparecerão no registro." action={<Button icon={<Plus size={16} />} onClick={openCreate}>Criar primeiro registro</Button>} /> : (
               <div className="space-y-3">
                 {filteredRecords.map((record) => (
                   <article key={record.id} className="rounded-xl border border-slate-200 p-4 transition hover:border-blue-200 hover:shadow-sm">
@@ -386,25 +428,25 @@ export function OperacionalPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setViewingRecord(record)} className="rounded-lg p-2 text-slate-400 transition hover:bg-blue-50 hover:text-blue-600" aria-label="Visualizar registro" title="Visualizar">
-                          <Eye size={17} />
+                        <button onClick={() => setViewingRecord(record)} className="inline-flex items-center gap-1 rounded-lg px-2 py-2 text-xs font-medium text-slate-500 transition hover:bg-blue-50 hover:text-blue-600" aria-label="Visualizar registro" title="Visualizar">
+                          <Eye size={15} /> Ver
                         </button>
-                        <button onClick={() => openEdit(record)} className="rounded-lg p-2 text-slate-400 transition hover:bg-amber-50 hover:text-amber-600" aria-label="Editar registro" title="Editar">
-                          <Edit3 size={17} />
+                        <button onClick={() => openEdit(record)} className="inline-flex items-center gap-1 rounded-lg px-2 py-2 text-xs font-medium text-slate-500 transition hover:bg-amber-50 hover:text-amber-600" aria-label="Editar registro" title="Editar">
+                          <Edit3 size={15} /> Editar
                         </button>
-                        <label className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-emerald-50 hover:text-emerald-600" aria-label="Anexar PDF" title="Anexar PDF">
+                        <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-2 text-xs font-medium text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-600" aria-label="Anexar PDF" title="Anexar PDF">
                           {uploadingId === record.id ? (
                             <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                             </svg>
                           ) : (
-                            <Paperclip size={17} />
+                            <><Paperclip size={15} /> PDF</>
                           )}
                           <input type="file" accept="application/pdf" className="hidden" onChange={(e) => void handleUploadPdf(e, record)} disabled={uploadingId === record.id} />
                         </label>
-                        <button onClick={() => printRecord(record)} className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Imprimir registro" title="Imprimir">
-                          <Printer size={17} />
+                        <button onClick={() => printRecord(record)} className="inline-flex items-center gap-1 rounded-lg px-2 py-2 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Imprimir registro" title="Imprimir">
+                          <Printer size={15} /> Imprimir
                         </button>
                         <button onClick={() => void deleteRecord(record)} className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600" aria-label="Excluir registro" title="Excluir">
                           <Trash2 size={17} />
