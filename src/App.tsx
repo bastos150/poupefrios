@@ -31,6 +31,13 @@ function AppContent() {
     }
   }, [session]);
 
+  // Guard admin-only pages — must run before any conditional return
+  useEffect(() => {
+    if (page === 'config' && perfil?.papel !== 'admin') {
+      setPage('dashboard');
+    }
+  }, [page, perfil]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -46,13 +53,6 @@ function AppContent() {
   const friosSetor = setores.find((s) => s.nome === 'Frios');
   const acougueSetor = setores.find((s) => s.nome === 'Açougue');
   const padariaSetor = setores.find((s) => s.nome === 'Padaria');
-
-  // Guard admin-only pages
-  useEffect(() => {
-    if (page === 'config' && perfil?.papel !== 'admin') {
-      setPage('dashboard');
-    }
-  }, [page, perfil]);
 
   function renderPage() {
     switch (page) {
