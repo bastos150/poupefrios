@@ -4,6 +4,7 @@ import {
   Snowflake,
   Beef,
   Croissant,
+  Carrot,
   ClipboardCheck,
   History,
   Settings,
@@ -22,6 +23,7 @@ export type PageKey =
   | 'frios'
   | 'acougue'
   | 'padaria'
+  | 'hortifruti'
   | 'checklists'
   | 'operacional'
   | 'historico'
@@ -39,6 +41,7 @@ const navItems: NavItem[] = [
   { key: 'frios', label: 'Frios', icon: <Snowflake size={20} /> },
   { key: 'acougue', label: 'Açougue', icon: <Beef size={20} /> },
   { key: 'padaria', label: 'Padaria', icon: <Croissant size={20} /> },
+  { key: 'hortifruti', label: 'Hortifruti', icon: <Carrot size={20} /> },
   { key: 'checklists', label: 'Checklists & POPs', icon: <ClipboardCheck size={20} /> },
   { key: 'operacional', label: 'Controles Operacionais', icon: <ClipboardList size={20} /> },
   { key: 'historico', label: 'Histórico & Relatórios', icon: <History size={20} /> },

@@ -53,6 +53,7 @@ function AppContent() {
   const friosSetor = setores.find((s) => s.nome === 'Frios');
   const acougueSetor = setores.find((s) => s.nome === 'Açougue');
   const padariaSetor = setores.find((s) => s.nome === 'Padaria');
+  const hortifrutiSetor = setores.find((s) => s.nome === 'Hortifruti (Refrigeracao)');
 
   function renderPage() {
     switch (page) {
@@ -69,6 +70,12 @@ function AppContent() {
       case 'padaria':
         return padariaSetor ? (
           <SectorTempPage setorNome="Padaria" setorId={padariaSetor.id} />
+        ) : (
+          <Loading message="Carregando setores..." />
+        );
+      case 'hortifruti':
+        return hortifrutiSetor ? (
+          <SectorTempPage setorNome="Hortifruti (Refrigeracao)" setorId={hortifrutiSetor.id} />
         ) : (
           <Loading message="Carregando setores..." />
         );
