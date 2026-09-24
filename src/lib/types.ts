@@ -239,6 +239,7 @@ export interface ControleOperacional {
   origem: string | null;
   destino: string | null;
   observacao: string | null;
+  anexo_url: string | null;
   setor_id: string | null;
   user_id: string;
   created_at: string;
