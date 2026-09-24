@@ -49,6 +49,7 @@ export function ConfigPage() {
     temp_min: '', temp_max: '', unidade: '°C', frequencia_horas: '4', min_verificacoes_dia: '2',
   });
   const [equipSubmitting, setEquipSubmitting] = useState(false);
+  const [editingEquipId, setEditingEquipId] = useState<string | null>(null);
 
   // Usuários
   const [perfis, setPerfis] = useState<(Perfil & { setor?: Setor; cargo?: Cargo })[]>([]);
@@ -110,11 +111,36 @@ export function ConfigPage() {
     await load();
   }
 
+  function openNewEquip() {
+    setEditingEquipId(null);
+    setEquipForm({
+      nome: '', tipo: 'refrigerador', setor_id: '', ponto_medicao: '',
+      temp_min: '', temp_max: '', unidade: '°C', frequencia_horas: '4', min_verificacoes_dia: '2',
+    });
+    setShowEquipModal(true);
+  }
+
+  function openEditEquip(eq: Equipamento & { setor?: Setor }) {
+    setEditingEquipId(eq.id);
+    setEquipForm({
+      nome: eq.nome,
+      tipo: eq.tipo,
+      setor_id: eq.setor_id,
+      ponto_medicao: eq.ponto_medicao ?? '',
+      temp_min: eq.temp_min !== null ? String(eq.temp_min) : '',
+      temp_max: eq.temp_max !== null ? String(eq.temp_max) : '',
+      unidade: eq.unidade,
+      frequencia_horas: String(eq.frequencia_horas),
+      min_verificacoes_dia: String(eq.min_verificacoes_dia),
+    });
+    setShowEquipModal(true);
+  }
+
   async function handleSaveEquip(e: React.FormEvent) {
     e.preventDefault();
     if (!equipForm.nome.trim() || !equipForm.setor_id) return;
     setEquipSubmitting(true);
-    await supabase.from('equipamentos').insert({
+    const payload = {
       nome: equipForm.nome.trim(),
       tipo: equipForm.tipo,
       setor_id: equipForm.setor_id,
@@ -124,10 +150,15 @@ export function ConfigPage() {
       unidade: equipForm.unidade,
       frequencia_horas: Number(equipForm.frequencia_horas) || 4,
       min_verificacoes_dia: Number(equipForm.min_verificacoes_dia) || 2,
-      ativo: true,
-    });
+    };
+    if (editingEquipId) {
+      await supabase.from('equipamentos').update(payload).eq('id', editingEquipId);
+    } else {
+      await supabase.from('equipamentos').insert({ ...payload, ativo: true });
+    }
     setEquipSubmitting(false);
     setShowEquipModal(false);
+    setEditingEquipId(null);
     setEquipForm({
       nome: '', tipo: 'refrigerador', setor_id: '', ponto_medicao: '',
       temp_min: '', temp_max: '', unidade: '°C', frequencia_horas: '4', min_verificacoes_dia: '2',
@@ -282,7 +313,7 @@ export function ConfigPage() {
         <div className="sp-card p-5">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="font-semibold text-slate-900">Equipamentos e Pontos de Medição</h3>
-            <Button size="sm" icon={<Plus size={16} />} onClick={() => setShowEquipModal(true)}>Novo Equipamento</Button>
+            <Button size="sm" icon={<Plus size={16} />} onClick={openNewEquip}>Novo Equipamento</Button>
           </div>
           {equipamentos.length > 0 ? (
             <div className="overflow-x-auto">
@@ -313,10 +344,11 @@ export function ConfigPage() {
                       </td>
                       <td className="sp-table-td">
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => toggleEquipAtivo(eq)}>
+                          <Button variant="ghost" size="sm" icon={<Edit2 size={14} />} onClick={() => openEditEquip(eq)} title="Editar equipamento" />
+                          <Button variant="ghost" size="sm" onClick={() => toggleEquipAtivo(eq)} title={eq.ativo ? 'Desativar' : 'Ativar'}>
                             {eq.ativo ? <X size={14} /> : <Check size={14} />}
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => deleteEquip(eq)}>
+                          <Button variant="ghost" size="sm" onClick={() => deleteEquip(eq)} title="Excluir">
                             <Trash2 size={14} className="text-red-600" />
                           </Button>
                         </div>
@@ -469,13 +501,13 @@ export function ConfigPage() {
 
       <Modal
         open={showEquipModal}
-        onClose={() => setShowEquipModal(false)}
-        title="Novo Equipamento"
+        onClose={() => { setShowEquipModal(false); setEditingEquipId(null); }}
+        title={editingEquipId ? 'Editar Equipamento' : 'Novo Equipamento'}
         size="lg"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setShowEquipModal(false)}>Cancelar</Button>
-            <Button onClick={handleSaveEquip} loading={equipSubmitting}>Criar</Button>
+            <Button variant="ghost" onClick={() => { setShowEquipModal(false); setEditingEquipId(null); }}>Cancelar</Button>
+            <Button onClick={handleSaveEquip} loading={equipSubmitting}>{editingEquipId ? 'Salvar alterações' : 'Criar'}</Button>
           </>
         }
       >
